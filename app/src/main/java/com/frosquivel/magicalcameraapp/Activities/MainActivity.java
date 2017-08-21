@@ -47,6 +47,7 @@ package com.frosquivel.magicalcameraapp.Activities;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -59,6 +60,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -147,18 +149,26 @@ public class MainActivity extends AppCompatActivity {
         //realized the instance of magical camera, this need the context, this need the context,
         //the percentage of quality photo and the permission granted
         magicalPermissions = new MagicalPermissions(this, permissions);
+        //TODO improve dialog
+        Dialog dialog = new Dialog(this);
+        dialog.setTitle("testing");
+        EditText editText = new EditText(this);
+        editText.setText("TESTING");
+        dialog.setContentView(editText);
+        dialog.setCancelable(true);
+        magicalPermissions.setDialog(dialog);
         magicalCamera = new MagicalCamera(this, Integer.parseInt(Utils.getSharedPreference(this, Utils.C_PREFERENCE_MC_QUALITY_PICTURE)), magicalPermissions);
 
         btntakephoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if (isActivePermission(MagicalCamera.CAMERA)) {
+                magicalCamera.takePhoto();
+                /*if (isActivePermission(MagicalCamera.CAMERA)) {
                     //call the method of take the picture
                     magicalCamera.takePhoto();
                 } else {
                     Utils.viewSnackBar(getString(R.string.error_string_base_64), principalLayout);
-                }
+                }*/
             }
         });
 

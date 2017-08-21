@@ -1,15 +1,16 @@
 package com.frosquivel.magicalcamera;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,7 @@ public class MagicalPermissions {
     private String[] permissions;
     private String[] allPermissions;
     private Runnable task;
-
+    private Dialog dialog;
 
 
     public MagicalPermissions(Activity activity, String[] permissions) {
@@ -112,7 +113,7 @@ public class MagicalPermissions {
 
         //validate if have permissions or not for call the request permissions
         if (permissionListFault.size() > 0 && !runPendingTaskFlag) {
-            boolean isCurrentOpetationType = false;
+            boolean isCurrentOperationType = false;
             for (int x = 0; this.allPermissions.length > x; x++) {
 
                 boolean isSuccessPermission = true;
@@ -124,24 +125,77 @@ public class MagicalPermissions {
 
                 if (isSuccessPermission) {
                     if (operationType.equals(allPermissions[x])) {
-                        isCurrentOpetationType = true;
+                        isCurrentOperationType = true;
                         runPendingTask();
                         break;
                     }
                 }
             }
 
-            if (!isCurrentOpetationType) {
-                //Request permissions is being lint, but that is not a problem in the askPermissions method there is a validation to prevent it in lowe API
-                //Adding a suppress warning annotation is worst because since android studio 2.3 annotated methods can be marked as dangerous
-                if (activity != null) {
-                    activity.requestPermissions(permissions, RC_PERMISSIONS_ACTIVITY);
-                } else if (fragment != null) {
-                    fragment.requestPermissions(permissions, RC_PERMISSIONS_FRAGMENT);
-                } else if (fragmentV4 != null) {
-                    fragmentV4.requestPermissions(permissions, RC_PERMISSIONS_FRAGMENT);
+            if (!isCurrentOperationType) {
+                //If there is no need to show the rationale dialog to the user then we directly ask for the permissions
+                //If we have to show the rationale dialog explaining why the permissions are needed then,
+                //that dialog will take care of asking the permissions later
+                if (!rationaleVerification()) {
+                    askPermissionsToUser();
                 }
             }
+        }
+    }
+
+    public void setDialog(Dialog dialog) {
+        this.dialog = dialog;
+    }
+
+    private boolean rationaleVerification() {
+        if (dialog != null) {
+            //linting here is giving us a bad clue, please read askPermissionsToUser() method
+            if (activity != null) {
+                for (String permission : permissions) {
+                    if (activity.shouldShowRequestPermissionRationale(permission)) {
+                        rationaleDialog();
+                        return true;
+                    }
+                }
+            } else if (fragment != null) {
+                for (String permission : permissions) {
+                    if (fragment.shouldShowRequestPermissionRationale(permission)) {
+                        rationaleDialog();
+                        return true;
+                    }
+                }
+            } else if (fragmentV4 != null) {
+                for (String permission : permissions) {
+                    if (fragmentV4.shouldShowRequestPermissionRationale(permission)) {
+                        rationaleDialog();
+                        return true;
+                    }
+                }
+            }
+        }
+        //if none of the previous validations qualify, then there is no need for dialog rationale
+        return false;
+    }
+
+    private void rationaleDialog() {
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                askPermissionsToUser();
+            }
+        });
+        dialog.show();
+    }
+
+    private void askPermissionsToUser(){
+        //Request permissions is being lint, but that is not a problem in the askPermissions method there is a validation to prevent it in lowe API
+        //Adding a suppress warning annotation is worst because since android studio 2.3 annotated methods can be marked as dangerous
+        if (activity != null) {
+            activity.requestPermissions(permissions, RC_PERMISSIONS_ACTIVITY);
+        } else if (fragment != null) {
+            fragment.requestPermissions(permissions, RC_PERMISSIONS_FRAGMENT);
+        } else if (fragmentV4 != null) {
+            fragmentV4.requestPermissions(permissions, RC_PERMISSIONS_FRAGMENT);
         }
     }
 
