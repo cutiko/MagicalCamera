@@ -51,7 +51,7 @@ public class MagicalPermissions {
 
 
     public boolean permissionsNeeded() {
-        return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M);
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
     }
 
     public void askPermissions(final Runnable task) {
